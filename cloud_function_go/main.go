@@ -12,7 +12,7 @@ import (
 	"github.com/logzio/logzio-go"
 )
 
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
+func logzioHandler(w http.ResponseWriter, r *http.Request) {
 	var data string
 	var d struct {
 		Message string `json:"data"`
