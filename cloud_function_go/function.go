@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/logzio/logzio-go"
 )
 
-func logzioHandler(w http.ResponseWriter, r *http.Request) {
-	var data string
+func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 	var d struct {
 		Message string `json:"data"`
 	}
@@ -34,7 +32,6 @@ func logzioHandler(w http.ResponseWriter, r *http.Request) {
 		tokenAddType,
 		logzio.SetDebug(os.Stderr),
 		logzio.SetUrl(url),
-		logzio.SetDrainDuration(time.Minute*10),
 		logzio.SetInMemoryQueue(true),
 		logzio.SetinMemoryCapacity(24000000),
 		logzio.SetlogCountLimit(6000000),
@@ -47,5 +44,5 @@ func logzioHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	l.Stop() //logs are buffered on disk. Stop will drain the buffer
+	l.Stop()
 }

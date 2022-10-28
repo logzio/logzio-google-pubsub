@@ -4,8 +4,9 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 
 ## Prerequisites
 
--   Install gcloud and login to gcloud
--   clone repository to your computer
+-   Install gcloud cli and login to gcloud
+-   Install [jq](https://stedolan.github.io/jq/download/)
+-   Download Latest Release
 
 ## Resources
 
@@ -23,15 +24,11 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 2. Set default project id, from what project you want to send logs.
    `gcloud config set project <PROJECT_ID>`
 
-And Need to have assigned to the project, Billing Account.
+And need to have assigned to the project, Billing Account.
 
-3. Clone repository to the folder
+3. Donwload and Unzip Latest Release
 
-```
- git clone  repo_name  builder
-```
-
-4. Go to the folder `builder`
+4. Go to, via terminal to unzip `builder` folder
 
 ```
 cd builder
@@ -46,16 +43,15 @@ chmod +x run.sh
 6. Run a code with variables
 
 ```
-./run.sh LISTENER TOKEN REGION TYPE_OF_LOG
+./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type>
 ```
 
-| Parameter                         | Description                                                                                                                             |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| LISTENER                          | Name of the Lambda function that will be created. This name will also be used to identify the Lambda function in the Logz.io dashboard. |
-| TYPE_OF_LOG                       | Lambda function description.                                                                                                            |
-| TOKEN                             | Your Logz.io logs shipping token.                                                                                                       |
-| Schedule Rate (Default: 1 minute) | Range in a minutes to run a Lambda function (using cloudBridge event).                                                                  |
-| REGION                            | Your AWS access key ID. \*`Requires for Deploy to Cloud option for platform`.                                                           |
+| Parameter    | Description                                                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| listener_url | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html). |
+| type         | Log type. Help classify logs into different classifications.                                                                                                  |
+| token        | The token of the account you want to ship to.                                                                                                                 |
+| region       | Region where you want to upload Cloud Funtion. \*`Requires for Deploy to Cloud option for platform`.                                                          |
 
 ## Check Logz.io for your logs
 
@@ -66,3 +62,9 @@ and then open [Kibana](https://app.logz.io/#/dashboard/kibana).
 ## License
 
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
+
+## Update log
+
+**1.0.0**
+
+-   Initial Release

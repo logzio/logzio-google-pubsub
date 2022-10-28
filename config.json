@@ -32,20 +32,28 @@
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
+            "entrypoint": "bash",
             "args": [
-                "pubsub",
-                "subscriptions",
-                "delete",
-                "$_PUBSUB_SUBSCRIPTION_NAME"
+                "-c",
+                "gcloud pubsub topics list | \n while read -r line \ndo \n stringarray=($line) \n pubsub_topic_remove_name=\"projects/$PROJECT_ID/topics/$_PUBSUB_TOPIC_NAME\" \n if [[ \"${stringarray[1]}\" == \"$pubsub_topic_remove_name\" ]] ;then \n delete_code=\"$(gcloud pubsub topics delete $_PUBSUB_TOPIC_NAME)\" \n fi \n done"
             ]
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
-            "args": ["pubsub", "topics", "delete", "$_PUBSUB_TOPIC_NAME"]
+            "entrypoint": "bash",
+            "args": [
+                "-c",
+                "gcloud logging sinks delete $_SINK_NAME || true",
+                "y"
+            ]
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
-            "args": ["logging", "sink", "delete", "$_SINK_NAME"]
+            "entrypoint": "bash",
+            "args": [
+                "-c",
+                "gcloud pubsub subscriptions list | \n while read -r line \ndo \n stringarray=($line) \n pubsub_subscription_remove_name=\"projects/$PROJECT_ID/subscriptions/$_PUBSUB_SUBSCRIPTION_NAME\" \n if [[ \"${stringarray[1]}\" == \"$pubsub_subscription_remove_name\" ]] ;then \n delete_code=\"$(gcloud pubsub subscriptions delete $_PUBSUB_SUBSCRIPTION_NAME)\" \n fi \n done"
+            ]
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
@@ -82,10 +90,10 @@
                 "functions",
                 "deploy",
                 "logzioHandler",
-                "--region=us-central1",
-                "--entry-point=logzioHandler",
+                "--region=$_REGION",
+                "--entry-point=LogzioHandler",
                 "--trigger-http",
-                "--runtime=nodejs16",
+                "--runtime=go116",
                 "--source=gs://logzio-pubsub-handler/cloud_function.zip"
             ]
         },
@@ -94,7 +102,7 @@
             "entrypoint": "bash",
             "args": [
                 "-c",
-                "gcloud alpha functions add-iam-policy-binding $_FUNCTION_NAME --region=us-central1 --member=allUsers --role=roles/cloudfunctions.invoker\n"
+                "gcloud alpha functions add-iam-policy-binding $_FUNCTION_NAME --region=$_REGION --member=allUsers --role=roles/cloudfunctions.invoker\n"
             ]
         }
     ],
