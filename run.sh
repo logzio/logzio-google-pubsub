@@ -34,7 +34,7 @@ function get_arguments () {
             --listener_url=*)
                 listener_url=$(echo "$1" | cut -d "=" -f2)
                 if [[ "$listener_url" = "" ]]; then
-                    echo -e "\033[0;31mrun.sh (1): no Logz.io app URL specified!\033[0;37m"
+                    echo -e "\033[0;31mrun.sh (1): no Logz.io Listener URL specified!\033[0;37m"
                     exit 1
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] listener_url = $listener_url"
@@ -50,7 +50,7 @@ function get_arguments () {
             --region=*)
                 region=$(echo "$1" | cut -d "=" -f2)
                 if [[ "$region" = "" ]]; then
-                    echo -e "\033[0;31mrun.sh (1): no Google cloud region specified!\033[0;37m"
+                    echo -e "\033[0;31mrun.sh (1): no Google Cloud Region specified!\033[0;37m"
                     exit 1
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] id = $token" 
