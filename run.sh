@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Declare default type
+type="gcp-pubsub"
+
+
 # Prints usage
 # Output:
 #   Help usage
@@ -58,8 +62,9 @@ function get_arguments () {
              --type=*)
                 type=$(echo "$1" | cut -d "=" -f2)
                 if [[ "$type" = "" ]]; then
-                    echo -e "\033[0;31mrun.sh (1): no Type of log specified!\033[0;37m"
-                    exit 1
+                    echo -e "\033[0;31mrun.sh (1): Type will be assign gcp-pubsub!\033[0;37m"
+					#Define default
+					type="gcp-pubsub"
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] type = $type" 
                 ;;
@@ -97,13 +102,11 @@ function check_validation () {
         is_error=true
         echo -e "\033[0;31mrun.sh (1): Region for Google Cloud Platform must be specified\033[0;37m"
     fi
-    if [[ -z "$type" ]]; then
-        is_error=true
-        echo -e "\033[0;31mrun.sh (1): Logz.io Type for logs must be specified\033[0;37m"
-    fi
+    # if [[ -z "$type" ]]; then
+    #     is_error=true
+    #     echo -e "\033[0;31mrun.sh (1): Logz.io Type for logs must be specified\033[0;37m"
+    # fi
   
-
-
     if $is_error; then
         echo -e "\033[0;31mrun.sh (1): try './run.sh --help' for more information\033[0;37m"
         exit 1

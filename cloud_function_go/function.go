@@ -6,14 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/logzio/logzio-go"
 )
 
 func LogzioHandler(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		Data string `json:"data"`
+	}
+
 	var d struct {
-		Message string `json:"data"`
+		Message Data `json:"message"`
 	}
 	token := r.URL.Query().Get("token")
 	typeLog := r.URL.Query().Get("type")
@@ -26,16 +29,13 @@ func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message)
+	rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message.Data)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 
-	l, err := logzio.New(
-		tokenAddType,
-		logzio.SetDebug(os.Stderr),
-		logzio.SetUrl(url),
-		logzio.SetInMemoryQueue(true),
-		logzio.SetinMemoryCapacity(24000000),
-		logzio.SetlogCountLimit(6000000),
-	) // token is required
+	l, err := logzio.New(tokenAddType, logzio.SetUrl(url)) // token is required
 	if err != nil {
 		panic(err)
 	}
@@ -43,6 +43,6 @@ func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-
 	l.Stop()
+	return
 }

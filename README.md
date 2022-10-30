@@ -17,7 +17,7 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 
 ## Usage
 
-1. Before start a proccess please be sure that is you logged in and you setup relevant project.
+1. Please make sure you are logged in to the relevant project
    `gcloud auth login`
    And choose relevant account to login.
 
@@ -40,7 +40,7 @@ cd builder
 chmod +x run.sh
 ```
 
-6. Run a code with variables
+6. Run the code with the following variables
 
 ```
 ./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type>
@@ -49,13 +49,12 @@ chmod +x run.sh
 | Parameter    | Description                                                                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | listener_url | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html). |
-| type         | Log type. Help classify logs into different classifications.                                                                                                  |
+| type         | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                           |
 | token        | The token of the account you want to ship to.                                                                                                                 |
-| region       | Region where you want to upload Cloud Funtion. \*`Requires for Deploy to Cloud option for platform`.                                                          |
+| region       | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                         |
 
 ## Check Logz.io for your logs
 
-Spin up your Docker containers if you haven’t done so already.  
 Give your logs some time to get from your system to ours,
 and then open [Kibana](https://app.logz.io/#/dashboard/kibana).
 
