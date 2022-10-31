@@ -25,23 +25,21 @@ func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 	tokenAddType := fmt.Sprintf("%s&type=%s", token, typeLog)
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		return nil, fmt.Errorf("Can't decode request's body with log message: %w", err)
 	}
 
 	rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message.Data)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		return nil, fmt.Errorf("Message log can't be parsed: %w", err)
 	}
 
 	l, err := logzio.New(tokenAddType, logzio.SetUrl(url)) // token is required
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Logz.io connection failed: %w", err)
 	}
 	err = l.Send([]byte(rawDecodedText))
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Can't send log data to logz.io: %w", err)
 	}
 	l.Stop()
 	return

@@ -2,16 +2,18 @@
 
 # Declare default type
 type="gcp-pubsub"
-
+function_name"logzioHandler"
 
 # Prints usage
 # Output:
 #   Help usage
 function show_help () {
     echo -e "Usage: ./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type>"
-    echo -e " --listener_url=<listener_url>           Logz.io Listener URL (You can check it here https://docs.logz.io/user-guide/accounts/account-region.html)"
+    echo -e " --listener_url=<listener_url>       Logz.io Listener URL (You can check it here https://docs.logz.io/user-guide/accounts/account-region.html)"
     echo -e " --token=<token>                     Logz.io token of the account you want to ship to."
     echo -e " --region=<region>                   Region where you want to upload Cloud Funtion."
+    echo -e " --function_name=<function_name>     Function name will be using as Cloud Function name and prefix for services."
+    echo -e " --filter_log=<filter_log>           Detailed information about filters can be found at: https://cloud.google.com/logging/docs/view/logging-query-language"
     echo -e " --type=<type>                       Log type. Help classify logs into different classifications"
     echo -e " --help                              Show usage"
 }
@@ -62,11 +64,29 @@ function get_arguments () {
              --type=*)
                 type=$(echo "$1" | cut -d "=" -f2)
                 if [[ "$type" = "" ]]; then
-                    echo -e "\033[0;31mrun.sh (1): Type will be assign gcp-pubsub!\033[0;37m"
-					#Define default
-					type="gcp-pubsub"
+                    echo -e "\033[0;31mrun.sh (1): Type will be assign gcp-pubsub\033[0;37m"
+                    #Define default
+                    type="gcp-pubsub"
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] type = $type" 
+                ;;
+             --function_name=*)
+                function_name=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$function_name" = "" ]]; then
+                    echo -e "\033[0;31mrun.sh (1): Function name will be assign logzioHandler\033[0;37m"
+                    #Define default
+                    function_name="logzioHandler"
+                fi
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] function_name = $function_name" 
+                ;;
+            --filter_log=*)
+			    replace=""
+                filter_log=$(echo "$1" | sed -e "s/--filter_log=/${replace}/g")
+                if [[ "$filter_log" = "" ]]; then
+                    echo -e "\033[0;31mrun.sh (1): No filters assigned to sink\033[0;37m"
+                    #Define default
+                fi
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] filter_log = $filter_log" 
                 ;;
             "")
                 break
@@ -92,68 +112,74 @@ function check_validation () {
 
     if [[ -z "$listener_url" ]]; then
         is_error=true
-        echo -e "\033[0;31mrun.sh (1): Logz.io Listener URL must be specified\033[0;37m"
+        echo -e "\033[0;31mrun.sh (1): Logz.io Listener URL is missing please rerun the script with the relevant parameters\033[0;37m"
     fi
     if [[ -z "$token" ]]; then
         is_error=true
-        echo -e "\033[0;31mrun.sh (1): Logz.io Token must be specified\033[0;37m"
+        echo -e "\033[0;31mrun.sh (1): Logz.io Token is missing please rerun the script with the relevant parameters\033[0;37m"
     fi
     if [[ -z "$region" ]]; then
         is_error=true
-        echo -e "\033[0;31mrun.sh (1): Region for Google Cloud Platform must be specified\033[0;37m"
+        echo -e "\033[0;31mrun.sh (1): Region for Google Cloud Platform is missing please rerun the script with the relevant parameters\033[0;37m"
     fi
-    # if [[ -z "$type" ]]; then
-    #     is_error=true
-    #     echo -e "\033[0;31mrun.sh (1): Logz.io Type for logs must be specified\033[0;37m"
-    # fi
+
   
     if $is_error; then
         echo -e "\033[0;31mrun.sh (1): try './run.sh --help' for more information\033[0;37m"
         exit 1
     fi
 
-	echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Validation of arguments passed."
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Validation of arguments passed."
 }
 
 function populate_data_to_json (){
-	echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populating data to json ..."
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populating data to json ..."
 
-	contents="$(jq --arg token "${token}" '.substitutions._LOGZIO_TOKEN = $token' config.json)"
+    contents="$(jq --arg token "${token}" '.substitutions._LOGZIO_TOKEN = $token' config.json)"
     echo "${contents}" > config.json
-	contents="$(jq  --arg type_of_log "${type}" '.substitutions._TYPE_NAME = $type_of_log' config.json)"
+    contents="$(jq  --arg type_of_log "${type}" '.substitutions._TYPE_NAME = $type_of_log' config.json)"
     echo "${contents}" > config.json
-	contents="$(jq --arg region "${region}" '.substitutions._REGION = $region' config.json)"
+    contents="$(jq --arg region "${region}" '.substitutions._REGION = $region' config.json)"
     echo "${contents}" > config.json
-	contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
+    contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
     echo "${contents}" > config.json
-
-	echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
+    contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name+"-func_logzio"' config.json)"
+    echo "${contents}" > config.json
+    contents="$(jq --arg topic_prefix "${function_name}" '.substitutions._PUBSUB_TOPIC_NAME = $topic_prefix+"-pubsub-topic-logs-to-logzio"' config.json)"
+    echo "${contents}" > config.json
+    contents="$(jq --arg subscription_prefix "${function_name}" '.substitutions._PUBSUB_SUBSCRIPTION_NAME = $subscription_prefix+"-pubsub-subscription-logs-to-logzio"' config.json)"
+    echo "${contents}" > config.json
+    contents="$(jq --arg sink_prefix "${function_name}" '.substitutions._SINK_NAME = $sink_prefix+"-sink-logs-to-logzio"' config.json)"
+    echo "${contents}" > config.json
+    contents="$(jq --arg filter_log "${filter_log}" '.substitutions._FILTER_LOG = $filter_log' config.json)"
+    echo "${contents}" > config.json
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
 }
 
 function run_cloud_build(){
-	
-	echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Initialize Cloud Build ..."
-	# Take project ID and project Number
-	project_number="$(gcloud projects list \
-	--filter="$(gcloud config get-value project)" \
-	--format="value(PROJECT_NUMBER)")"
-	project_id="$(gcloud config get-value project)"
+    
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Initialize Cloud Build ..."
+    # Take project ID and project Number
+    project_number="$(gcloud projects list \
+    --filter="$(gcloud config get-value project)" \
+    --format="value(PROJECT_NUMBER)")"
+    project_id="$(gcloud config get-value project)"
  
-	# Give permission for Cloud Build to assign proper roles
-	cmd_enable_cloudresourcemanager="$(gcloud services enable cloudresourcemanager.googleapis.com)"
-	cmd_enable_cloudbuild="$(gcloud services enable cloudbuild.googleapis.com)"
-	cmd_enable_cloudfunction="$(gcloud services enable cloudfunctions.googleapis.com)"
+    # Give permission for Cloud Build to assign proper roles
+    cmd_enable_cloudresourcemanager="$(gcloud services enable cloudresourcemanager.googleapis.com)"
+    cmd_enable_cloudbuild="$(gcloud services enable cloudbuild.googleapis.com)"
+    cmd_enable_cloudfunction="$(gcloud services enable cloudfunctions.googleapis.com)"
 
-	cmd_add_policy="$(gcloud projects add-iam-policy-binding $project_id --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/resourcemanager.projectIamAdmin)"
-	cmd_enable_policy_function="$(gcloud iam service-accounts add-iam-policy-binding $project_id@appspot.gserviceaccount.com --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/iam.serviceAccountUser)"
+    cmd_add_policy="$(gcloud projects add-iam-policy-binding $project_id --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/resourcemanager.projectIamAdmin)"
+    cmd_enable_policy_function="$(gcloud iam service-accounts add-iam-policy-binding $project_id@appspot.gserviceaccount.com --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/iam.serviceAccountUser)"
 
-	#Get Access Token for upload
-	access_token="$(gcloud config config-helper --format='value(credential.access_token)')"
-	# Run project
-	cmd_create_cloud_build="$(curl -X POST -T config.json -H "Authorization: Bearer $access_token" https://cloudbuild.googleapis.com/v1/projects/$project_id/builds)"
+    #Get Access Token for upload
+    access_token="$(gcloud config config-helper --format='value(credential.access_token)')"
+    # Run project
+    cmd_create_cloud_build="$(curl -X POST -T config.json -H "Authorization: Bearer $access_token" https://cloudbuild.googleapis.com/v1/projects/$project_id/builds)"
 
-	echo "$cmd_create_cloud_build"
-	echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Cloud Build Initialization is finished."
+    echo "$cmd_create_cloud_build"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Cloud Build Initialization is finished."
 }
 
 get_arguments "$@"

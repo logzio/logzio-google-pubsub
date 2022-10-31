@@ -15,9 +15,11 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 -   Cloud Function
 -   Log Sink
 
-## Usage
+## Prerequisites
 
-1. Log in to your GCP account:
+Make sure you are connected to the relevant GCP project
+
+<details>1. Log in to your GCP account:
 
 ```shell
 gcloud auth login
@@ -25,42 +27,42 @@ gcloud auth login
 
 2. Navigate to the relevant project.
 
-
 3. Set the `project id` for the project that you want to send logs from:
 
 ```shell
 gcloud config set project <PROJECT_ID>
 ```
 
-Replace `<PROJECT_ID>` with the relevant project Id.
+Replace `<PROJECT_ID>` with the relevant project Id.</details>
 
-4. Assign a Billing Account to the selected project. 
+## Usage
 
-5. Donwload and unzip the latest release of `logzio-google-pubsub`.
+1. Donwload and unzip the latest release of `logzio-google-pubsub`.
 
-6. Navigate to the `builder` folder.
+2. Navigate to the `builder` folder.
 
-7. Allow the `sh` file to execute code.
+3. Allow the `sh` file to execute code.
 
 ```shell
 chmod +x run.sh
 ```
 
-9. Run the code:
+4. Run the code:
 
 ```
-./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type>
+./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type> --function_name=<function_name>
 ```
 
 Replace the variables as per the table below:
 
-
-| Parameter    | Description                                                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| listener_url | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html). |
-| type         | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                           |
-| token        | The token of the account you want to ship to.                                                                                                                 |
-| region       | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                         |
+| Parameter     | Description                                                                                                                                                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| listener_url  | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html).                                                                 |
+| token         | The logs' shipping token of the account you want to ship to.                                                                                                                                                                  |
+| region        | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                                         |
+| type          | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                                           |
+| function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                                          |
+| filter_log    | **_Optional_** Will send logs that match the filter. Detailed information about filters can be found [here](https://cloud.google.com/logging/docs/view/logging-query-language) (simple example: `resource.type=pubsub_topic`) |
 
 ## Check Logz.io for your logs
 
