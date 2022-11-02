@@ -43,15 +43,15 @@ func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 	typeLog := r.URL.Query().Get("type")
 	listener := r.URL.Query().Get("listener")
 
-	if token != "" {
+	if len(token) == 0 {
 		fmt.Printf("Logzio token must be provided")
 		return
 	}
-	if listener != "" {
+	if len(listener) == 0 {
 		fmt.Printf("Logzio listener must be provided")
 		return
 	}
-	if typeLog != "" {
+	if len(typeLog) == 0 {
 		fmt.Printf("Set default log type, `pubsub`")
 		typeLog = "pubsub"
 	}
