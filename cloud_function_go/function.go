@@ -31,10 +31,6 @@ func shouldRetry(statusCode int) bool {
 	return retry
 }
 
-func argumentValidation(token string, typeLog string, listener string) bool {
-
-}
-
 func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Data string `json:"data"`
