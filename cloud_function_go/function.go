@@ -3,7 +3,9 @@ package p
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,41 +33,54 @@ func shouldRetry(statusCode int) bool {
 	return retry
 }
 
-func LogzioHandler(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Data string `json:"data"`
-	}
+func validateArguments(r *http.Request) bool {
+	validateCheck := true
 
-	var d struct {
-		Message Data `json:"message"`
-	}
 	token := r.URL.Query().Get("token")
-	typeLog := r.URL.Query().Get("type")
-	listener := r.URL.Query().Get("listener")
-
 	if len(token) == 0 {
 		fmt.Printf("Logzio token must be provided")
-		return
+		validateCheck = false
 	}
+
+	listener := r.URL.Query().Get("listener")
 	if len(listener) == 0 {
 		fmt.Printf("Logzio listener must be provided")
-		return
+		validateCheck = false
 	}
+
+	typeLog := r.URL.Query().Get("type")
 	if len(typeLog) == 0 {
 		fmt.Printf("Set default log type, `pubsub`")
 		typeLog = "pubsub"
 	}
 
-	url := fmt.Sprintf("https://%s:8071/?token=%s&type=%s", listener, token, typeLog)
-	err := json.NewDecoder(r.Body).Decode(&d)
+	return validateCheck
+}
+
+func urlBuilder(r *http.Request) string {
+	token := r.URL.Query().Get("token")
+	listener := r.URL.Query().Get("listener")
+	typeLog := r.URL.Query().Get("type")
+
+	return fmt.Sprintf("https://%s:8071/?token=%s&type=%s", listener, token, typeLog)
+}
+
+func doRequest(rawDecodedText []byte, url string) {
+	// gzip compress data before shipping
+	var compressedBuf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&compressedBuf)
+	_, err := gzipWriter.Write(rawDecodedText)
 	if err != nil {
-		fmt.Printf("Can't decode request's body with log message: %w", err)
+		fmt.Printf("Failed to compress log")
 		return
 	}
-
-	rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message.Data)
+	err = gzipWriter.Close()
 	if err != nil {
-		fmt.Printf("Message log can't be parsed: %w", err)
+		fmt.Printf("Failed to close gzip")
+		return
+	}
+	if binary.Size(compressedBuf) > 10485760 {
+		fmt.Printf("The request body size is larger than 10 MB. Failed to send log")
 		return
 	}
 
@@ -90,4 +105,33 @@ func LogzioHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+}
+
+func LogzioHandler(w http.ResponseWriter, r *http.Request) {
+	type Data struct {
+		Data string `json:"data"`
+	}
+
+	var d struct {
+		Message Data `json:"message"`
+	}
+
+	if validateArguments(r) {
+
+		url := urlBuilder(r)
+		err := json.NewDecoder(r.Body).Decode(&d)
+		if err != nil {
+			fmt.Printf("Can't decode request's body with log message: %w", err)
+			return
+		}
+
+		rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message.Data)
+		if err != nil {
+			fmt.Printf("Message log can't be parsed: %w", err)
+			return
+		}
+
+		doRequest(rawDecodedText, url)
+	}
+
 }
