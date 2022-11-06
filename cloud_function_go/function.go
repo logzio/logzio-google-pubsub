@@ -31,7 +31,7 @@ func shouldRetry(statusCode int) bool {
 		fmt.Printf("Got HTTP %d not found, skip retry\n", statusCode)
 		retry = false
 	case http.StatusUnauthorized:
-		fmt.Printf("Got HTTP %d unauthorized, skip retry\n", statusCode)
+		fmt.Printf("Got HTTP %d unauthorized, skip retry. Please check if you providing proper token or listner\n", statusCode)
 		retry = false
 	case http.StatusForbidden:
 		fmt.Printf("Got HTTP %d forbidden, skip retry\n", statusCode)
