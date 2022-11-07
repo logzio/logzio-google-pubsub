@@ -31,7 +31,7 @@ func shouldRetry(statusCode int) bool {
 		fmt.Printf("Got HTTP %d not found, skip retry\n", statusCode)
 		retry = false
 	case http.StatusUnauthorized:
-		fmt.Printf("Got HTTP %d unauthorized, skip retry. Please check if you providing proper token or listner\n", statusCode)
+		fmt.Printf("Got HTTP %d unauthorized, skip retry.Please check your Logs' Token and try again\n", statusCode)
 		retry = false
 	case http.StatusForbidden:
 		fmt.Printf("Got HTTP %d forbidden, skip retry\n", statusCode)
@@ -71,21 +71,25 @@ func (l *logzioConfig) validateAndPopulateArguments(r *http.Request) {
 }
 
 func doRequest(rawDecodedText []byte, url string) {
+	if binary.Size(rawDecodedText) > maxSize {
+		fmt.Println("The request body size is larger than 10 MB.")
+		middleCounter := len(string(rawDecodedText)) / 2
+		cutMessage := string(rawDecodedText)[:middleCounter]
+		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
+		rawDecodedText = []byte(logToSend)
+
+	}
 	// gzip compress data before shipping
 	var compressedBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedBuf)
 	_, err := gzipWriter.Write(rawDecodedText)
 	if err != nil {
-		fmt.Printf("Failed to compress log")
+		fmt.Println("Failed to compress log")
 		return
 	}
 	err = gzipWriter.Close()
 	if err != nil {
-		fmt.Printf("Failed to close gzip")
-		return
-	}
-	if binary.Size(compressedBuf) > maxSize {
-		fmt.Printf("The request body size is larger than 10 MB. Failed to send log")
+		fmt.Println("Failed to close gzip")
 		return
 	}
 
