@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const maxSize = 10485760
+const maxSize = 512000
 
 type logzioConfig struct {
 	token      string
@@ -72,9 +72,8 @@ func (l *logzioConfig) validateAndPopulateArguments(r *http.Request) {
 
 func doRequest(rawDecodedText []byte, url string) {
 	if binary.Size(rawDecodedText) > maxSize {
-		fmt.Println("The request body size is larger than 10 MB.")
-		middleCounter := len(string(rawDecodedText)) / 2
-		cutMessage := string(rawDecodedText)[:middleCounter]
+		fmt.Printf("The request body size is larger than %d KB.", maxSize)
+		cutMessage := string(rawDecodedText)[:maxSize]
 		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
 		rawDecodedText = []byte(logToSend)
 
