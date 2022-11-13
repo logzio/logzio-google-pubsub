@@ -2,7 +2,7 @@
 
 # Declare default type
 type="gcp-pubsub"
-function_name"logzioHandler"
+function_name="logzioHandler"
 
 # Prints usage
 # Output:
@@ -13,7 +13,7 @@ function show_help () {
     echo -e " --token=<token>                     Logz.io token of the account you want to ship to."
     echo -e " --region=<region>                   Region where you want to upload Cloud Funtion."
     echo -e " --function_name=<function_name>     Function name will be using as Cloud Function name and prefix for services."
-    echo -e " --filter_log=<filter_log>           Detailed information about filters can be found at: https://cloud.google.com/logging/docs/view/logging-query-language"
+    echo -e " --resource_type=<resource_type>     Will send logs that match the Google resource type. Array of strings splitted by comma. Detailed list you can find https://cloud.google.com/logging/docs/api/v2/resource-list"
     echo -e " --type=<type>                       Log type. Help classify logs into different classifications"
     echo -e " --help                              Show usage"
 }
@@ -79,14 +79,13 @@ function get_arguments () {
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] function_name = $function_name" 
                 ;;
-            --filter_log=*)
-			    replace=""
-                filter_log=$(echo "$1" | sed -e "s/--filter_log=/${replace}/g")
-                if [[ "$filter_log" = "" ]]; then
-                    echo -e "\033[0;31mrun.sh (1): No filters assigned to sink\033[0;37m"
+            --resource_type=*)
+                resource_type=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$resource_type" = "" ]]; then
+                    echo -e "\033[0;31mrun.sh (1): No resource types assigned to sink\033[0;37m"
                     #Define default
                 fi
-                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] filter_log = $filter_log" 
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] resource_type = $resource_type" 
                 ;;
             "")
                 break
@@ -132,6 +131,30 @@ function check_validation () {
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Validation of arguments passed."
 }
 
+function populate_filter_for_service_name(){
+    if [[ ! -z "$resource_type" ]]; then
+	filter=" AND"
+	array_filter_names=(${resource_type//,/ })
+
+	last_element=${#array_filter_names[@]}
+	current=0
+	for name in "${array_filter_names[@]}"
+    do
+	    current=$((current + 1))
+	    if [ $current -eq $last_element ]; then
+	        filter+=" resource.type=${name}"
+        else
+	        filter+=" resource.type=${name} AND"
+	    fi
+    # or do whatever with individual element of the array
+    done
+	resource_type=$filter
+    fi
+
+	echo "$resource_type"
+}
+
+
 function populate_data_to_json (){
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populating data to json ..."
 
@@ -143,7 +166,7 @@ function populate_data_to_json (){
     echo "${contents}" > config.json
     contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
     echo "${contents}" > config.json
-    contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name+"-func_logzio"' config.json)"
+    contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name+"_func_logzio"' config.json)"
     echo "${contents}" > config.json
     contents="$(jq --arg topic_prefix "${function_name}" '.substitutions._PUBSUB_TOPIC_NAME = $topic_prefix+"-pubsub-topic-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
@@ -151,8 +174,13 @@ function populate_data_to_json (){
     echo "${contents}" > config.json
     contents="$(jq --arg sink_prefix "${function_name}" '.substitutions._SINK_NAME = $sink_prefix+"-sink-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
-    contents="$(jq --arg filter_log "${filter_log}" '.substitutions._FILTER_LOG = $filter_log' config.json)"
+    if [[ ! -z "$resource_type" ]]; then
+    contents="$(jq --arg resource_type "${resource_type}" '.substitutions._FILTER_LOG = $resource_type' config.json)"
     echo "${contents}" > config.json
+	else
+	    contents="$(jq --arg resource_type "${resource_type}" '.substitutions._FILTER_LOG = ""' config.json)"
+    echo "${contents}" > config.json
+	fi
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
 }
 
@@ -183,8 +211,8 @@ function run_cloud_build(){
 }
 
 get_arguments "$@"
+populate_filter_for_service_name
 populate_data_to_json
 run_cloud_build
-
 
 
