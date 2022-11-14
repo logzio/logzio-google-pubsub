@@ -55,14 +55,14 @@ chmod +x run.sh
 
 Replace the variables as per the table below:
 
-| Parameter     | Description                                                                                                                                                                                                                   |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| listener_url  | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html).                                                                 |
-| token         | The logs' shipping token of the account you want to ship to.                                                                                                                                                                  |
-| region        | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                                         |
-| type          | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                                           |
-| function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                                          |
-| filter_log    | **_Optional_** Will send logs that match the filter. Detailed information about filters can be found [here](https://cloud.google.com/logging/docs/view/logging-query-language) (simple example: `resource.type=pubsub_topic`) |
+| Parameter     | Description                                                                                                                                                                                               |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| listener_url  | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html).                                             |
+| token         | The logs' shipping token of the account you want to ship to.                                                                                                                                              |
+| region        | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                     |
+| type          | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                       |
+| function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
+| resource_type | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
 
 ## Check Logz.io for your logs
 
@@ -73,6 +73,10 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Update log
+
+**1.1.0**
+
+-   Replace sink filter to google cloud resource type
 
 **1.0.0**
 
