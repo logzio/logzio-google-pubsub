@@ -74,6 +74,11 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Update log
 
+**1.2.0**
+
+-   Replace location of the cloud function from cloud storage to local
+-   Replace trigger function from HTTP to pubsub trigger
+
 **1.1.0**
 
 -   Replace sink filter to google cloud resource type
