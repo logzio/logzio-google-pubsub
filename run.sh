@@ -206,6 +206,17 @@ function run_cloud_build(){
     # Run project
     cmd_create_cloud_build="$(curl -X POST -T config.json -H "Authorization: Bearer $access_token" https://cloudbuild.googleapis.com/v1/projects/$project_id/builds)"
 
+
+	# Create Function with using local files
+    function_name_sufix="${function_name}_func_logzio"
+	topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
+
+    gcloud functions deploy $function_name_sufix --region=$region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$type --set-env-vars=listener=$listener_url
+    if [[ $? -ne 0 ]]; then
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create Cloud Function."
+        exit 1
+    fi
+	
     echo "$cmd_create_cloud_build"
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Cloud Build Initialization is finished."
 }

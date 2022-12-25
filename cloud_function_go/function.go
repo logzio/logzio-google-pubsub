@@ -4,11 +4,11 @@ package p
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/base64"
+	"context"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -19,6 +19,15 @@ type logzioConfig struct {
 	listener   string
 	typeLog    string
 	validation bool
+}
+type PubSubMessage struct {
+	Data []byte `json:"data"`
+}
+
+// client is used to make HTTP requests with a 10 second timeout.
+// http.Clients should be reused instead of created as needed.
+var client = &http.Client{
+	Timeout: 10 * time.Second,
 }
 
 func shouldRetry(statusCode int) bool {
@@ -42,26 +51,26 @@ func shouldRetry(statusCode int) bool {
 	return retry
 }
 
-func (l *logzioConfig) validateAndPopulateArguments(r *http.Request) {
+func (l *logzioConfig) validateAndPopulateArguments() {
 
-	token := r.URL.Query().Get("token")
-	if len(l.token) == 0 {
+	token := os.Getenv("token")
+	if len(token) == 0 {
 		fmt.Printf("Logzio token must be provided")
 		l.validation = false
 	} else {
 		l.token = token
 	}
 
-	listener := r.URL.Query().Get("listener")
-	if len(l.listener) == 0 {
+	listener := os.Getenv("listener")
+	if len(listener) == 0 {
 		fmt.Printf("Logzio listener must be provided")
 		l.validation = false
 	} else {
 		l.listener = listener
 	}
 
-	typeLog := r.URL.Query().Get("type")
-	if len(l.typeLog) == 0 {
+	typeLog := os.Getenv("type")
+	if len(typeLog) == 0 {
 		fmt.Printf("Set default log type, `pubsub`")
 		l.typeLog = "pubsub"
 	} else {
@@ -71,48 +80,41 @@ func (l *logzioConfig) validateAndPopulateArguments(r *http.Request) {
 }
 
 func doRequest(rawDecodedText []byte, url string) {
+
 	if binary.Size(rawDecodedText) > maxSize {
 		fmt.Printf("The request body size is larger than %d KB.", maxSize)
 		cutMessage := string(rawDecodedText)[:maxSize]
 		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
 		rawDecodedText = []byte(logToSend)
-
 	}
 	// gzip compress data before shipping
 	var compressedBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedBuf)
-	_, err := gzipWriter.Write(rawDecodedText)
-	if err != nil {
-		fmt.Println("Failed to compress log")
-		return
-	}
-	err = gzipWriter.Close()
-	if err != nil {
-		fmt.Println("Failed to close gzip")
-		return
-	}
+	gzipWriter.Write(rawDecodedText)
+	gzipWriter.Close()
 
 	backOff := time.Second * 2
 	sendRetries := 4
 	toBackOff := false
 	for attempt := 0; attempt < sendRetries; attempt++ {
 		if toBackOff {
-			fmt.Printf("Failed to send logs, trying again in %w\n", backOff)
+			fmt.Printf("Failed to send logs, trying again in %s\n", backOff)
 			time.Sleep(backOff)
 			backOff *= 2
 		}
 
-		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(rawDecodedText))
+		req, err := http.NewRequest("POST", url, &compressedBuf)
 		if err != nil {
-			fmt.Printf("Connection was failed: %w", err)
+			fmt.Printf("Connection was failed: %s", err)
 			return
 		}
 		req.Header.Add("Content-Encoding", "gzip")
+		req.Header.Add("Content-Type", "text/plain")
+		req.Header.Add("logzio-shipper", "logzio-go/v1.0.0")
 
-		client := http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf("Can't send data to logz.io, reason is: %w", err)
+			fmt.Printf("Can't send data to logz.io, reason is: %s", err)
 			return
 		}
 
@@ -123,40 +125,21 @@ func doRequest(rawDecodedText []byte, url string) {
 		} else {
 			break
 		}
+
 	}
+
 }
 
-func LogzioHandler(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Data string `json:"data"`
-	}
+func LogzioHandler(ctx context.Context, m PubSubMessage) error {
 
-	var d struct {
-		Message Data `json:"message"`
-	}
-	validationCheck := true
-
-	logzioConfig := logzioConfig{
-		validation: validationCheck,
-	}
-	logzioConfig.validateAndPopulateArguments(r)
+	logzioConfig := logzioConfig{}
+	logzioConfig.validation = true
+	logzioConfig.validateAndPopulateArguments()
 
 	if logzioConfig.validation {
-
-		url := fmt.Sprintf("https://%s:8071/?token=%s&type=%s", logzioConfig.listener, logzioConfig.token, logzioConfig.typeLog)
-		err := json.NewDecoder(r.Body).Decode(&d)
-		if err != nil {
-			fmt.Printf("Can't decode request's body with log message: %w", err)
-			return
-		}
-
-		rawDecodedText, err := base64.StdEncoding.DecodeString(d.Message.Data)
-		if err != nil {
-			fmt.Printf("Message log can't be parsed: %w", err)
-			return
-		}
-
-		doRequest(rawDecodedText, url)
+		url := fmt.Sprintf("https://%s:8071?token=%s&type=%s", logzioConfig.listener, logzioConfig.token, logzioConfig.typeLog)
+		doRequest(m.Data, url)
+		return nil
 	}
-
+	return nil
 }
