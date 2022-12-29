@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Declare default type
-type="gcp-pubsub"
+log_type="gcp-pubsub"
 function_name="logzioHandler"
 
 # Prints usage
 # Output:
 #   Help usage
 function show_help () {
-    echo -e "Usage: ./run.sh --listener_url=<listener_url> --token=<token> --region=<region> --type=<type>"
+    echo -e "Usage: ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<log_type>"
     echo -e " --listener_url=<listener_url>       Logz.io Listener URL (You can check it here https://docs.logz.io/user-guide/accounts/account-region.html)"
     echo -e " --token=<token>                     Logz.io token of the account you want to ship to."
-    echo -e " --region=<region>                   Region where you want to upload Cloud Funtion."
+    echo -e " --gcp_region=<gcp_region>           Region where you want to upload Cloud Funtion."
     echo -e " --function_name=<function_name>     Function name will be using as Cloud Function name and prefix for services."
-    echo -e " --resource_type=<resource_type>     Will send logs that match the Google resource type. Array of strings splitted by comma. Detailed list you can find https://cloud.google.com/logging/docs/api/v2/resource-list"
-    echo -e " --type=<type>                       Log type. Help classify logs into different classifications"
+    echo -e " --resource_list=<resource_list>     Will send logs that match the Google resource type. Array of strings splitted by comma. Detailed list you can find https://cloud.google.com/logging/docs/api/v2/resource-list"
+    echo -e " --log_type=<log_type>               Log type. Help classify logs into different classifications"
     echo -e " --help                              Show usage"
 }
 
@@ -53,22 +53,22 @@ function get_arguments () {
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] token = $token"
                 ;;
-            --region=*)
-                region=$(echo "$1" | cut -d "=" -f2)
-                if [[ "$region" = "" ]]; then
+            --gcp_region=*)
+                gcp_region=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$gcp_region" = "" ]]; then
                     echo -e "\033[0;31mrun.sh (1): no Google Cloud Region specified!\033[0;37m"
                     exit 1
                 fi
-                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] id = $token" 
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] gcp_region = $gcp_region" 
                 ;;
-             --type=*)
-                type=$(echo "$1" | cut -d "=" -f2)
-                if [[ "$type" = "" ]]; then
+             --log_type=*)
+                log_type=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$log_type" = "" ]]; then
                     echo -e "\033[0;31mrun.sh (1): Type will be assign gcp-pubsub\033[0;37m"
                     #Define default
-                    type="gcp-pubsub"
+                    log_type="gcp-pubsub"
                 fi
-                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] type = $type" 
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] log_type = $log_type" 
                 ;;
              --function_name=*)
                 function_name=$(echo "$1" | cut -d "=" -f2)
@@ -79,13 +79,13 @@ function get_arguments () {
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] function_name = $function_name" 
                 ;;
-            --resource_type=*)
-                resource_type=$(echo "$1" | cut -d "=" -f2)
-                if [[ "$resource_type" = "" ]]; then
+            --resource_list=*)
+                resource_list=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$resource_list" = "" ]]; then
                     echo -e "\033[0;31mrun.sh (1): No resource types assigned to sink\033[0;37m"
                     #Define default
                 fi
-                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] resource_type = $resource_type" 
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] resource_list = $resource_list" 
                 ;;
             "")
                 break
@@ -117,7 +117,7 @@ function check_validation () {
         is_error=true
         echo -e "\033[0;31mrun.sh (1): Logz.io Token is missing please rerun the script with the relevant parameters\033[0;37m"
     fi
-    if [[ -z "$region" ]]; then
+    if [[ -z "$gcp_region" ]]; then
         is_error=true
         echo -e "\033[0;31mrun.sh (1): Region for Google Cloud Platform is missing please rerun the script with the relevant parameters\033[0;37m"
     fi
@@ -132,9 +132,9 @@ function check_validation () {
 }
 
 function populate_filter_for_service_name(){
-    if [[ ! -z "$resource_type" ]]; then
+    if [[ ! -z "$resource_list" ]]; then
 	filter=" AND"
-	array_filter_names=(${resource_type//,/ })
+	array_filter_names=(${resource_list//,/ })
 
 	last_element=${#array_filter_names[@]}
 	current=0
@@ -148,10 +148,10 @@ function populate_filter_for_service_name(){
 	    fi
     # or do whatever with individual element of the array
     done
-	resource_type=$filter
+	resource_list=$filter
     fi
 
-	echo "$resource_type"
+	echo "$resource_list"
 }
 
 
@@ -160,9 +160,9 @@ function populate_data_to_json (){
 
     contents="$(jq --arg token "${token}" '.substitutions._LOGZIO_TOKEN = $token' config.json)"
     echo "${contents}" > config.json
-    contents="$(jq  --arg type_of_log "${type}" '.substitutions._TYPE_NAME = $type_of_log' config.json)"
+    contents="$(jq  --arg type_of_log "${log_type}" '.substitutions._TYPE_NAME = $type_of_log' config.json)"
     echo "${contents}" > config.json
-    contents="$(jq --arg region "${region}" '.substitutions._REGION = $region' config.json)"
+    contents="$(jq --arg region "${gcp_region}" '.substitutions._REGION = $region' config.json)"
     echo "${contents}" > config.json
     contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
     echo "${contents}" > config.json
@@ -174,14 +174,50 @@ function populate_data_to_json (){
     echo "${contents}" > config.json
     contents="$(jq --arg sink_prefix "${function_name}" '.substitutions._SINK_NAME = $sink_prefix+"-sink-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
-    if [[ ! -z "$resource_type" ]]; then
-    contents="$(jq --arg resource_type "${resource_type}" '.substitutions._FILTER_LOG = $resource_type' config.json)"
+    if [[ ! -z "$resource_list" ]]; then
+    contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = $resource_list' config.json)"
     echo "${contents}" > config.json
 	else
-	    contents="$(jq --arg resource_type "${resource_type}" '.substitutions._FILTER_LOG = ""' config.json)"
+	    contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = ""' config.json)"
     echo "${contents}" > config.json
 	fi
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
+}
+
+# Ping GCloud
+# Output:
+# Error:
+#   Exit Code 1
+function is_gcloud_install(){
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")]running command gcloud -v .."
+
+    gcloud_ping=`gcloud -v 2>/dev/null | wc -w`
+
+    if [ $gcloud_ping -gt 0 ]
+    then
+        return
+    else
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to get gcloud CLI. Please install Gcloud and login to proper account from where you want to send metrics..."
+        exit 1	
+    fi
+}
+
+# Get project ID 
+# Error:
+#   Exit Code 1
+function get_project_id(){
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Getting Google Project ID..."
+
+    gcloud config get-value project
+    if [[ $? -ne 0 ]]; then
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to get user project id  ..."
+        exit 1
+    else
+        project_id="$(gcloud config get-value project)"
+        echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Project ID=$project_id where will launch integration."
+    fi
+
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Got Project ID"
 }
 
 function run_cloud_build(){
@@ -191,7 +227,6 @@ function run_cloud_build(){
     project_number="$(gcloud projects list \
     --filter="$(gcloud config get-value project)" \
     --format="value(PROJECT_NUMBER)")"
-    project_id="$(gcloud config get-value project)"
  
     # Give permission for Cloud Build to assign proper roles
     cmd_enable_cloudresourcemanager="$(gcloud services enable cloudresourcemanager.googleapis.com)"
@@ -211,7 +246,7 @@ function run_cloud_build(){
     function_name_sufix="${function_name}_func_logzio"
 	topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
 
-    gcloud functions deploy $function_name_sufix --region=$region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$type --set-env-vars=listener=$listener_url
+    gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
     if [[ $? -ne 0 ]]; then
         echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create Cloud Function."
         exit 1
@@ -221,6 +256,8 @@ function run_cloud_build(){
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Cloud Build Initialization is finished."
 }
 
+is_gcloud_install
+get_project_id
 get_arguments "$@"
 populate_filter_for_service_name
 populate_data_to_json
