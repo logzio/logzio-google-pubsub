@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -79,18 +80,51 @@ func (l *logzioConfig) validateAndPopulateArguments() {
 
 }
 
+func updateFields(rawDecodedText []byte) ([]byte, error) {
+	var m map[string]interface{}
+	err := json.Unmarshal(rawDecodedText, &m)
+	if err != nil {
+		fmt.Printf("Can't parse a json: %s", err)
+		return nil, err
+	}
+	val, ok := m["textPayload"]
+	// If the key textPayload exists
+	if ok {
+		delete(m, "textPayload")
+		m["message"] = val
+	}
+	value, okey := m["severity"]
+	// If the key severity exists
+	if okey {
+		delete(m, "severity")
+		m["log_level"] = value
+	}
+
+	rawDecodedText, err = json.Marshal(m)
+	if err != nil {
+		fmt.Printf("Can't parse to bytes: %s", err)
+		return nil, err
+	}
+	return rawDecodedText, nil
+}
+
 func doRequest(rawDecodedText []byte, url string) {
 
-	if binary.Size(rawDecodedText) > maxSize {
+	rawDecodedTextUpdated, err := updateFields(rawDecodedText)
+	if err != nil {
+		fmt.Printf("Can't to parse json object: %s", err)
+		return
+	}
+	if binary.Size(rawDecodedTextUpdated) > maxSize {
 		fmt.Printf("The request body size is larger than %d KB.", maxSize)
-		cutMessage := string(rawDecodedText)[:maxSize]
+		cutMessage := string(rawDecodedTextUpdated)[:maxSize]
 		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
 		rawDecodedText = []byte(logToSend)
 	}
 	// gzip compress data before shipping
 	var compressedBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedBuf)
-	gzipWriter.Write(rawDecodedText)
+	gzipWriter.Write(rawDecodedTextUpdated)
 	gzipWriter.Close()
 
 	backOff := time.Second * 2
