@@ -214,7 +214,7 @@ function get_project_id(){
         exit 1
     else
         project_id="$(gcloud config get-value project)"
-        echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Project ID=$project_id where will launch integration."
+        echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Integration will be launch in Project ID=$project_id"
     fi
 
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Got Project ID"
@@ -242,9 +242,9 @@ function run_cloud_build(){
     cmd_create_cloud_build="$(curl -X POST -T config.json -H "Authorization: Bearer $access_token" https://cloudbuild.googleapis.com/v1/projects/$project_id/builds)"
 
 
-	# Create Function with using local files
+    # Create Function with using local files
     function_name_sufix="${function_name}_func_logzio"
-	topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
+    topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
 
     gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
     if [[ $? -ne 0 ]]; then

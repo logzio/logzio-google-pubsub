@@ -25,6 +25,9 @@ type PubSubMessage struct {
 	Data []byte `json:"data"`
 }
 
+const textPayload = "textPayload"
+const severity = "severity"
+
 // client is used to make HTTP requests with a 10 second timeout.
 // http.Clients should be reused instead of created as needed.
 var client = &http.Client{
@@ -80,51 +83,51 @@ func (l *logzioConfig) validateAndPopulateArguments() {
 
 }
 
-func updateFields(rawDecodedText []byte) ([]byte, error) {
+func updateFields(rawDecodedText *[]byte) error {
 	var m map[string]interface{}
-	err := json.Unmarshal(rawDecodedText, &m)
+	err := json.Unmarshal(*rawDecodedText, &m)
 	if err != nil {
 		fmt.Printf("Can't parse a json: %s", err)
-		return nil, err
+		return err
 	}
-	val, ok := m["textPayload"]
+	val, ok := m[textPayload]
 	// If the key textPayload exists
 	if ok {
-		delete(m, "textPayload")
+		delete(m, textPayload)
 		m["message"] = val
 	}
-	value, okey := m["severity"]
+	value, okey := m[severity]
 	// If the key severity exists
 	if okey {
-		delete(m, "severity")
+		delete(m, severity)
 		m["log_level"] = value
 	}
 
-	rawDecodedText, err = json.Marshal(m)
+	*rawDecodedText, err = json.Marshal(m)
 	if err != nil {
 		fmt.Printf("Can't parse to bytes: %s", err)
-		return nil, err
+		return err
 	}
-	return rawDecodedText, nil
+	return nil
 }
 
 func doRequest(rawDecodedText []byte, url string) {
 
-	rawDecodedTextUpdated, err := updateFields(rawDecodedText)
+	err := updateFields(&rawDecodedText)
 	if err != nil {
 		fmt.Printf("Can't to parse json object: %s", err)
 		return
 	}
-	if binary.Size(rawDecodedTextUpdated) > maxSize {
+	if binary.Size(rawDecodedText) > maxSize {
 		fmt.Printf("The request body size is larger than %d KB.", maxSize)
-		cutMessage := string(rawDecodedTextUpdated)[:maxSize]
+		cutMessage := string(rawDecodedText)[:maxSize]
 		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
 		rawDecodedText = []byte(logToSend)
 	}
 	// gzip compress data before shipping
 	var compressedBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedBuf)
-	gzipWriter.Write(rawDecodedTextUpdated)
+	gzipWriter.Write(rawDecodedText)
 	gzipWriter.Close()
 
 	backOff := time.Second * 2
