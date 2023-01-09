@@ -175,12 +175,12 @@ function populate_data_to_json (){
     contents="$(jq --arg sink_prefix "${function_name}" '.substitutions._SINK_NAME = $sink_prefix+"-sink-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
     if [[ ! -z "$resource_list" ]]; then
-    contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = $resource_list' config.json)"
-    echo "${contents}" > config.json
-	else
-	    contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = ""' config.json)"
-    echo "${contents}" > config.json
-	fi
+        contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = $resource_list' config.json)"
+        echo "${contents}" > config.json
+    else
+        contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = ""' config.json)"
+        echo "${contents}" > config.json
+    fi
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
 }
 

@@ -105,7 +105,7 @@ func updateFields(rawDecodedText *[]byte) error {
 
 	*rawDecodedText, err = json.Marshal(m)
 	if err != nil {
-		fmt.Printf("Can't parse to bytes: %s", err)
+		fmt.Printf("Can't parse json: %s", err)
 		return err
 	}
 	return nil
@@ -115,11 +115,11 @@ func doRequest(rawDecodedText []byte, url string) {
 
 	err := updateFields(&rawDecodedText)
 	if err != nil {
-		fmt.Printf("Can't to parse json object: %s", err)
+		fmt.Printf("Can't to update log fields of 'log_level' and 'message': %s", err)
 		return
 	}
 	if binary.Size(rawDecodedText) > maxSize {
-		fmt.Printf("The request body size is larger than %d KB.", maxSize)
+		fmt.Printf("The request body size is larger than %d KB. The log will be converted to a string and the size of the string will be the %d KB. After that string of the log will be store in message.", maxSize, maxSize)
 		cutMessage := string(rawDecodedText)[:maxSize]
 		logToSend := fmt.Sprintf("{message:%s}", cutMessage)
 		rawDecodedText = []byte(logToSend)
@@ -147,7 +147,6 @@ func doRequest(rawDecodedText []byte, url string) {
 		}
 		req.Header.Add("Content-Encoding", "gzip")
 		req.Header.Add("Content-Type", "text/plain")
-		req.Header.Add("logzio-shipper", "logzio-go/v1.0.0")
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -169,14 +168,17 @@ func doRequest(rawDecodedText []byte, url string) {
 
 func LogzioHandler(ctx context.Context, m PubSubMessage) error {
 
-	logzioConfig := logzioConfig{}
-	logzioConfig.validation = true
+	logzioConfig := logzioConfig{
+		validation: true,
+	}
 	logzioConfig.validateAndPopulateArguments()
 
 	if logzioConfig.validation {
 		url := fmt.Sprintf("https://%s:8071?token=%s&type=%s", logzioConfig.listener, logzioConfig.token, logzioConfig.typeLog)
 		doRequest(m.Data, url)
 		return nil
+	} else {
+		fmt.Printf("Please check your credentials. Logzio listener and Logzio token, must be provided.")
+		return nil
 	}
-	return nil
 }

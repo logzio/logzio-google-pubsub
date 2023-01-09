@@ -81,7 +81,7 @@
         "_PUBSUB_TOPIC_NAME": "pubsub-topic-logs-to-logzio",
         "_PUBSUB_SUBSCRIPTION_NAME": "pubsub-subscription-logs-to-logzio",
         "_SINK_NAME": "sink-logs-to-logzio",
-        "_FUNCTION_NAME": "logzio_func_logzio",
+        "_FUNCTION_NAME": "dump_name_gcp_fucntion_name_func_logzio",
         "_REGION": "us-central1",
         "_LOGZIO_LISTENER": "listener.logz.io",
         "_LOGZIO_TOKEN": "token",
