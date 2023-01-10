@@ -15,12 +15,6 @@ import (
 
 const maxSize = 512000
 
-type logzioConfig struct {
-	token      string
-	listener   string
-	typeLog    string
-	validation bool
-}
 type PubSubMessage struct {
 	Data []byte `json:"data"`
 }
@@ -55,32 +49,24 @@ func shouldRetry(statusCode int) bool {
 	return retry
 }
 
-func (l *logzioConfig) validateAndPopulateArguments() {
+func validateArgumentsAndCreateURL() (string, error) {
 
-	token := os.Getenv("token")
-	if len(token) == 0 {
-		fmt.Printf("Logzio token must be provided")
-		l.validation = false
-	} else {
-		l.token = token
+	if len(os.Getenv("token")) == 0 {
+		return "", fmt.Errorf("Logzio token must be provided")
 	}
 
-	listener := os.Getenv("listener")
-	if len(listener) == 0 {
-		fmt.Printf("Logzio listener must be provided")
-		l.validation = false
-	} else {
-		l.listener = listener
+	if len(os.Getenv("listener")) == 0 {
+		return "", fmt.Errorf("Logzio listener must be provided")
 	}
 
 	typeLog := os.Getenv("type")
-	if len(typeLog) == 0 {
+	if len(os.Getenv("type")) == 0 {
 		fmt.Printf("Set default log type, `pubsub`")
-		l.typeLog = "pubsub"
-	} else {
-		l.typeLog = typeLog
+		typeLog = "pubsub"
 	}
 
+	url := fmt.Sprintf("https://%s:8071?token=%s&type=%s", os.Getenv("listener"), os.Getenv("token"), typeLog)
+	return url, nil
 }
 
 func updateFields(rawDecodedText *[]byte) error {
@@ -168,17 +154,11 @@ func doRequest(rawDecodedText []byte, url string) {
 
 func LogzioHandler(ctx context.Context, m PubSubMessage) error {
 
-	logzioConfig := logzioConfig{
-		validation: true,
+	url, err := validateArgumentsAndCreateURL()
+	if err != nil {
+		return err
 	}
-	logzioConfig.validateAndPopulateArguments()
 
-	if logzioConfig.validation {
-		url := fmt.Sprintf("https://%s:8071?token=%s&type=%s", logzioConfig.listener, logzioConfig.token, logzioConfig.typeLog)
-		doRequest(m.Data, url)
-		return nil
-	} else {
-		fmt.Printf("Please check your credentials. Logzio listener and Logzio token, must be provided.")
-		return nil
-	}
+	doRequest(m.Data, url)
+	return nil
 }
