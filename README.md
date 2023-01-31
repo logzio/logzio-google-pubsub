@@ -4,7 +4,7 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 
 ## Prerequisites
 
--   Installed [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed
+-   Installed [gcloud CLI](https://cloud.google.com/sdk/docs/install)
 -   Active GCP account
 -   Installed [jq](https://stedolan.github.io/jq/download/)
 
@@ -50,7 +50,7 @@ chmod +x run.sh
 4. Run the code:
 
 ```
-./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name>
+./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --resource_list=<resource_list>
 ```
 
 Replace the variables as per the table below:
@@ -62,7 +62,7 @@ Replace the variables as per the table below:
 | gcp_region    | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                     |
 | log_type      | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                       |
 | function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
-| resource_type | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
+| resource_list | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
 
 ## Check Logz.io for your logs
 
