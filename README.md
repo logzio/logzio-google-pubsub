@@ -64,7 +64,7 @@ Replace the variables as per the table below:
 | function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
 | resource_list | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
 
-## Initializiate account
+## Initialization account
 
 First step what you will see it's initialize account. Launches an interactive Getting Started workflow for the gcloud command-line tool. It performs the following setup steps:
 
