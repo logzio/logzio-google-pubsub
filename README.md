@@ -64,6 +64,14 @@ Replace the variables as per the table below:
 | function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
 | resource_list | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
 
+## Initializiate account
+
+First step what you will see it's initialize account. Launches an interactive Getting Started workflow for the gcloud command-line tool. It performs the following setup steps:
+
+-   Authorizes gcloud and other SDK tools to access Google Cloud using your user account credentials, or from an account of your choosing whose credentials are already available.
+-   Sets up a new or existing configuration.
+-   Sets properties in that configuration, including the current project and optionally, the default Google Compute Engine region and zone you'd like to use.
+
 ## Check Logz.io for your logs
 
 Give your logs some time to get from your system to ours, and then open [Kibana](https://app.logz.io/#/dashboard/kibana).
@@ -73,6 +81,10 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Update log
+
+**1.2.1**
+
+-   Add function to init account and assign main project
 
 **1.2.0**
 
