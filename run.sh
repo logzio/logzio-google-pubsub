@@ -202,24 +202,6 @@ function is_gcloud_install(){
     fi
 }
 
-# Get project ID 
-# Error:
-#   Exit Code 1
-function get_project_id(){
-    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Getting Google Project ID..."
-
-    gcloud config get-value project
-    if [[ $? -ne 0 ]]; then
-        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to get user project id  ..."
-        exit 1
-    else
-        project_id="$(gcloud config get-value project)"
-        echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Integration will be launch in Project ID=$project_id"
-    fi
-
-    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Got Project ID"
-}
-
 function run_cloud_build(){
     
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Initialize Cloud Build ..."
