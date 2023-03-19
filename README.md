@@ -53,6 +53,8 @@ chmod +x run.sh
 ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --resource_list=<resource_list>
 ```
 
+<b>When you run this script, you should choose the project ID where you need to run the integration.</b>
+
 Replace the variables as per the table below:
 
 | Parameter     | Description                                                                                                                                                                                               |
@@ -73,6 +75,10 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Update log
+
+**1.2.1**
+
+-   Add function that user can choose project id where need to run integration
 
 **1.2.0**
 
