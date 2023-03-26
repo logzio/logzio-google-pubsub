@@ -8,12 +8,12 @@ function_name="logzioHandler"
 # Output:
 #   Help usage
 function show_help () {
-    echo -e "Usage: ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<log_type>"
+    echo -e "Usage: ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --function_name=<function_name> --log_type=<log_type> --telemetry_list=<telemetry_list> "
     echo -e " --listener_url=<listener_url>       Logz.io Listener URL (You can check it here https://docs.logz.io/user-guide/accounts/account-region.html)"
     echo -e " --token=<token>                     Logz.io token of the account you want to ship to."
     echo -e " --gcp_region=<gcp_region>           Region where you want to upload Cloud Funtion."
     echo -e " --function_name=<function_name>     Function name will be using as Cloud Function name and prefix for services."
-    echo -e " --resource_list=<resource_list>     Will send logs that match the Google resource type. Array of strings splitted by comma. Detailed list you can find https://cloud.google.com/logging/docs/api/v2/resource-list"
+    echo -e " --telemetry_list=<telemetry_list>   Will send logs that match the Google resource type. Array of strings splitted by comma. Detailed list you can find https://cloud.google.com/logging/docs/api/v2/resource-list"
     echo -e " --log_type=<log_type>               Log type. Help classify logs into different classifications"
     echo -e " --help                              Show usage"
 }
@@ -79,13 +79,13 @@ function get_arguments () {
                 fi
                 echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] function_name = $function_name" 
                 ;;
-            --resource_list=*)
-                resource_list=$(echo "$1" | cut -d "=" -f2)
-                if [[ "$resource_list" = "" ]]; then
+            --telemetry_list=*)
+                telemetry_list=$(echo "$1" | cut -d "=" -f2)
+                if [[ "$telemetry_list" = "" ]]; then
                     echo -e "\033[0;31mrun.sh (1): No resource types assigned to sink\033[0;37m"
                     #Define default
                 fi
-                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] resource_list = $resource_list" 
+                echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] telemetry_list = $telemetry_list" 
                 ;;
             "")
                 break
@@ -132,9 +132,9 @@ function check_validation () {
 }
 
 function populate_filter_for_service_name(){
-    if [[ ! -z "$resource_list" ]]; then
+    if [[ ! -z "$telemetry_list" ]]; then
 	filter=" AND"
-	array_filter_names=(${resource_list//,/ })
+	array_filter_names=(${telemetry_list//,/ })
 
 	last_element=${#array_filter_names[@]}
 	current=0
@@ -148,10 +148,10 @@ function populate_filter_for_service_name(){
 	    fi
     # or do whatever with individual element of the array
     done
-	resource_list=$filter
+	telemetry_list=$filter
     fi
 
-	echo "$resource_list"
+	echo "$telemetry_list"
 }
 
 
@@ -174,11 +174,11 @@ function populate_data_to_json (){
     echo "${contents}" > config.json
     contents="$(jq --arg sink_prefix "${function_name}" '.substitutions._SINK_NAME = $sink_prefix+"-sink-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
-    if [[ ! -z "$resource_list" ]]; then
-        contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = $resource_list' config.json)"
+    if [[ ! -z "$telemetry_list" ]]; then
+        contents="$(jq --arg telemetry_list "${telemetry_list}" '.substitutions._FILTER_LOG = $telemetry_list' config.json)"
         echo "${contents}" > config.json
     else
-        contents="$(jq --arg resource_list "${resource_list}" '.substitutions._FILTER_LOG = ""' config.json)"
+        contents="$(jq --arg telemetry_list "${telemetry_list}" '.substitutions._FILTER_LOG = ""' config.json)"
         echo "${contents}" > config.json
     fi
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Populate data to json finished."
