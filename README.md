@@ -76,6 +76,10 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Update log
 
+**1.2.2**
+
+-   Rename param from `resource_list` to `telemetry_list`
+
 **1.2.1**
 
 -   Add function that user can choose project id where need to run integration
