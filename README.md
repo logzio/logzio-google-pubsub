@@ -50,21 +50,21 @@ chmod +x run.sh
 4. Run the code:
 
 ```
-./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --resource_list=<resource_list>
+./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --telemetry_list=<telemetry_list>
 ```
 
 <b>When you run this script, you should choose the project ID where you need to run the integration.</b>
 
 Replace the variables as per the table below:
 
-| Parameter     | Description                                                                                                                                                                                               |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| listener_url  | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html).                                             |
-| token         | The logs' shipping token of the account you want to ship to.                                                                                                                                              |
-| gcp_region    | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                     |
-| log_type      | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                       |
-| function_name | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
-| resource_list | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
+| Parameter      | Description                                                                                                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| listener_url   | Use the listener URL specific to the region of your Logz.io account. You can look it up [here](https://docs.logz.io/user-guide/accounts/account-region.html).                                             |
+| token          | The logs' shipping token of the account you want to ship to.                                                                                                                                              |
+| gcp_region     | Region where you want to upload Cloud Function. \*`Requires for Deploy to Cloud option for platform`.                                                                                                     |
+| log_type       | Log type. Help classify logs into different classifications. (Default:`gcp-pubsub`)                                                                                                                       |
+| function_name  | Function name will be using as Google Cloud Function name. (Default:`logzioHandler`)                                                                                                                      |
+| telemetry_list | **_Optional_** Will send logs that match the Google resource type. Detailed list you can find [here](https://cloud.google.com/logging/docs/api/v2/resource-list) (ex: `pubsub_topic,pubsub_subscription`) |
 
 ## Check Logz.io for your logs
 
@@ -75,6 +75,10 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Update log
+
+**1.2.2**
+
+-   Rename param from `resource_list` to `telemetry_list`
 
 **1.2.1**
 
