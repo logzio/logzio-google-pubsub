@@ -50,7 +50,7 @@ chmod +x run.sh
 4. Run the code:
 
 ```
-./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --resource_list=<resource_list>
+./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --telemetry_list=<telemetry_list>
 ```
 
 <b>When you run this script, you should choose the project ID where you need to run the integration.</b>
