@@ -2,7 +2,7 @@
 
 # Declare default type
 log_type="gcp-pubsub"
-function_name="logzioHandler"
+function_name="logzio_handler"
 
 # Prints usage
 # Output:
@@ -166,8 +166,16 @@ function populate_data_to_json (){
     echo "${contents}" > config.json
     contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
     echo "${contents}" > config.json
-    contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name+"_func_logzio"' config.json)"
-    echo "${contents}" > config.json
+
+    if [[ "$function_name" =~ ^logzio_* ]];
+    then
+        contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name' config.json)"
+        echo "${contents}" > config.json    
+    else
+        contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = "logzio_"+$function_name' config.json)"
+        echo "${contents}" > config.json
+    fi
+
     contents="$(jq --arg topic_prefix "${function_name}" '.substitutions._PUBSUB_TOPIC_NAME = $topic_prefix+"-pubsub-topic-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
     contents="$(jq --arg subscription_prefix "${function_name}" '.substitutions._PUBSUB_SUBSCRIPTION_NAME = $subscription_prefix+"-pubsub-subscription-logs-to-logzio"' config.json)"
@@ -225,7 +233,13 @@ function run_cloud_build(){
 
 
     # Create Function with using local files
-    function_name_sufix="${function_name}_func_logzio"
+    if [[ "$function_name" =~ ^logzio_* ]];
+    then
+        function_name_sufix="${function_name}"
+    else
+        function_name_sufix="logzio_${function_name}"
+    fi
+
     topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
 
     gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
@@ -291,5 +305,3 @@ get_arguments "$@"
 populate_filter_for_service_name
 populate_data_to_json
 run_cloud_build
-
-
