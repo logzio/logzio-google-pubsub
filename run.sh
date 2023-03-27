@@ -2,8 +2,7 @@
 
 # Declare default type
 log_type="gcp-pubsub"
-function_name="logzioHandler"
-function_prefix="logzio_"
+function_name="logzio_handler"
 
 # Prints usage
 # Output:
@@ -168,7 +167,7 @@ function populate_data_to_json (){
     contents="$(jq --arg listener_url "${listener_url}" '.substitutions._LOGZIO_LISTENER = $listener_url' config.json)"
     echo "${contents}" > config.json
 
-    if [[ $function_name == *"$function_prefix"* ]];
+    if [[ "$function_name" =~ ^logzio_* ]];
     then
         contents="$(jq --arg function_name "${function_name}" '.substitutions._FUNCTION_NAME = $function_name' config.json)"
         echo "${contents}" > config.json    
@@ -234,7 +233,7 @@ function run_cloud_build(){
 
 
     # Create Function with using local files
-    if [[ $function_name == *"$function_prefix"* ]];
+    if [[ "$function_name" =~ ^logzio_* ]];
     then
         function_name_sufix="${function_name}"
     else
@@ -306,4 +305,3 @@ get_arguments "$@"
 populate_filter_for_service_name
 populate_data_to_json
 run_cloud_build
-
