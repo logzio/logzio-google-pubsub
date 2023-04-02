@@ -76,6 +76,10 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Update log
 
+**1.2.4**
+
+-   Support agent all_services as parameter of telemetry_list
+
 **1.2.3**
 
 -   Add prefix to the function name
