@@ -150,7 +150,10 @@ function populate_filter_for_service_name(){
     done
 	telemetry_list=$filter
     fi
-
+	
+    if [[ $filter == *"all_services"* ]]; then
+            telemetry_list=""
+    fi
 	echo "$telemetry_list"
 }
 
