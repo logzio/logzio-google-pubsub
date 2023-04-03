@@ -74,7 +74,7 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
-## Update log
+## Changelog
 
 -   **1.2.4**
 
