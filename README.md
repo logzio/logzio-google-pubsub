@@ -76,31 +76,31 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Update log
 
-**1.2.4**
+-   **1.2.4**
 
--   Support agent all_services as parameter of telemetry_list
+    Support agent all_services as parameter of telemetry_list
 
-**1.2.3**
+-   **1.2.3**
 
--   Add prefix to the function name
+    Add prefix to the function name
 
-**1.2.2**
+-   **1.2.2**
 
--   Rename param from `resource_list` to `telemetry_list`
+    Rename param from `resource_list` to `telemetry_list`
 
-**1.2.1**
+-   **1.2.1**
 
--   Add function that user can choose project id where need to run integration
+    Add function that user can choose project id where need to run integration
 
-**1.2.0**
+-   **1.2.0**
 
--   Replace location of the cloud function from cloud storage to local
--   Replace trigger function from HTTP to pubsub trigger
+    Replace location of the cloud function from cloud storage to local
+    Replace trigger function from HTTP to pubsub trigger
 
-**1.1.0**
+-   **1.1.0**
 
--   Replace sink filter to google cloud resource type
+    Replace sink filter to google cloud resource type
 
-**1.0.0**
+-   **1.0.0**
 
--   Initial Release
+    Initial Release
