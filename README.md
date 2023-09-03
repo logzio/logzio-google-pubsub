@@ -76,31 +76,27 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Changelog
 
--   **1.2.4**
+- **1.2.5**:
+  - **Bug fix** for project numbers with more than 2 digits.
 
-    Support agent all_services as parameter of telemetry_list
+- **1.2.4**:
+  - Support agent all_services as parameter of telemetry_list.
 
--   **1.2.3**
+- **1.2.3**:
+  - Add prefix to the function name
 
-    Add prefix to the function name
+- **1.2.2**:
+  - Rename param from `resource_list` to `telemetry_list`
 
--   **1.2.2**
+- **1.2.1**:
+  - Add function that user can choose project id where need to run integration
 
-    Rename param from `resource_list` to `telemetry_list`
+- **1.2.0**:
+  - Replace location of the cloud function from cloud storage to local 
+  - Replace trigger function from HTTP to pubsub trigger
 
--   **1.2.1**
+- **1.1.0**:
+  - Replace sink filter to google cloud resource type
 
-    Add function that user can choose project id where need to run integration
-
--   **1.2.0**
-
-    Replace location of the cloud function from cloud storage to local
-    Replace trigger function from HTTP to pubsub trigger
-
--   **1.1.0**
-
-    Replace sink filter to google cloud resource type
-
--   **1.0.0**
-
-    Initial Release
+- **1.0.0**:
+  - Initial Release
