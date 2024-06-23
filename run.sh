@@ -133,7 +133,7 @@ function check_validation () {
 
 function populate_filter_for_service_name(){
     if [[ ! -z "$telemetry_list" ]]; then
-	filter=" OR"
+	filter=" AND"
 	array_filter_names=(${telemetry_list//,/ })
 
 	last_element=${#array_filter_names[@]}
@@ -142,13 +142,13 @@ function populate_filter_for_service_name(){
     do
 	    current=$((current + 1))
 	    if [ $current -eq $last_element ]; then
-	        filter+=" resource.type=${name}"
+	        filter+=" resource.type=${name})"
         else
-	        filter+=" resource.type=${name} OR"
+	        filter+=" (resource.type=${name} OR"
 	    fi
     # or do whatever with individual element of the array
     done
-	telemetry_list="(${filter})"
+	telemetry_list="${filter}"
     fi
 	
     if [[ $filter == *"all_services"* ]]; then

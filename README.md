@@ -76,6 +76,9 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Changelog
 
+- **1.2.6**:
+  - **Bug fix** for multiple resource types condition.
+  - Upgrade GoLang runtime to v1.21
 - **1.2.5**:
   - **Bug fix** for project numbers with more than 2 digits.
 - **1.2.4**:
