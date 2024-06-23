@@ -148,7 +148,7 @@ function populate_filter_for_service_name(){
 	    fi
     # or do whatever with individual element of the array
     done
-	telemetry_list=$filter
+	telemetry_list="(${filter})"
     fi
 	
     if [[ $filter == *"all_services"* ]]; then
