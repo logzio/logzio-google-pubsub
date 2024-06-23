@@ -133,7 +133,7 @@ function check_validation () {
 
 function populate_filter_for_service_name(){
     if [[ ! -z "$telemetry_list" ]]; then
-	filter=" OR"
+	filter=" AND"
 	array_filter_names=(${telemetry_list//,/ })
 
 	last_element=${#array_filter_names[@]}
@@ -142,13 +142,13 @@ function populate_filter_for_service_name(){
     do
 	    current=$((current + 1))
 	    if [ $current -eq $last_element ]; then
-	        filter+=" resource.type=${name}"
+	        filter+=" resource.type=${name})"
         else
-	        filter+=" resource.type=${name} OR"
+	        filter+=" (resource.type=${name} OR"
 	    fi
     # or do whatever with individual element of the array
     done
-	telemetry_list="(${filter})"
+	telemetry_list="${filter}"
     fi
 	
     if [[ $filter == *"all_services"* ]]; then
@@ -245,7 +245,7 @@ function run_cloud_build(){
 
     topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
 
-    gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go116  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
+    gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go121  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
     if [[ $? -ne 0 ]]; then
         echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create Cloud Function."
         exit 1
