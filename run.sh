@@ -243,7 +243,7 @@ function remove_pubsub_topic(){
         exit 1
     fi
 	
-    echo "$cmd_remove_log_sink"
+    echo "$cmd_remove_topic"
     echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] PubSub topic removal is finished."
 }
 
