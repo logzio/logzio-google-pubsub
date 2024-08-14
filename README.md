@@ -76,6 +76,16 @@ Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) Lice
 
 ## Changelog
 
+- **1.2.7**:
+  - **Breaking change**
+    - Upgrade Google Cloud function to v2
+      - Add additional required permissions for the function
+  - Add function resources cleanup
+  - Additional function debugging logs
+  - Refactor config steps to functions in run script
+    - Create PubSub topic.
+    - Create LogSink.
+  - Update inclusion filter    
 - **1.2.6**:
   - **Bug fix** for multiple resource types condition.
   - Upgrade GoLang runtime to v1.21

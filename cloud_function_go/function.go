@@ -32,7 +32,7 @@ func shouldRetry(statusCode int) bool {
 	retry := true
 	switch statusCode {
 	case http.StatusBadRequest:
-		fmt.Printf("Got HTTP %d bad request, skip retry\n", statusCode)
+		fmt.Printf("Got HTTP %d bad request, payload body:\n %s, skip retry\n", statusCode, textPayload)
 		retry = false
 	case http.StatusNotFound:
 		fmt.Printf("Got HTTP %d not found, skip retry\n", statusCode)
@@ -70,30 +70,42 @@ func validateArgumentsAndCreateURL() (string, error) {
 }
 
 func updateFields(rawDecodedText *[]byte) error {
+	fmt.Println("Starting JSON unmarshal")
+	fmt.Printf("Raw data: %s\n", string(*rawDecodedText))
+
 	var m map[string]interface{}
 	err := json.Unmarshal(*rawDecodedText, &m)
 	if err != nil {
-		fmt.Printf("Can't parse a json: %s", err)
+		fmt.Printf("Can't parse a json: %s\n", err)
 		return err
 	}
+	fmt.Println("JSON unmarshal successful")
+
 	val, ok := m[textPayload]
-	// If the key textPayload exists
 	if ok {
+		fmt.Println("Found textPayload key, updating to message")
 		delete(m, textPayload)
 		m["message"] = val
-	}
-	value, okey := m[severity]
-	// If the key severity exists
-	if okey {
-		delete(m, severity)
-		m["log_level"] = value
+	} else {
+		fmt.Println("textPayload key not found")
 	}
 
+	value, okay := m[severity]
+	if okay {
+		fmt.Println("Found severity key, updating to log_level")
+		delete(m, severity)
+		m["log_level"] = value
+	} else {
+		fmt.Println("severity key not found")
+	}
+
+	fmt.Println("Updated map:", m)
 	*rawDecodedText, err = json.Marshal(m)
 	if err != nil {
-		fmt.Printf("Can't parse json: %s", err)
+		fmt.Printf("Can't marshal updated map to JSON: %s\n", err)
 		return err
 	}
+	fmt.Println("JSON marshal successful")
 	return nil
 }
 
@@ -112,9 +124,11 @@ func doRequest(rawDecodedText []byte, url string) {
 	}
 	// gzip compress data before shipping
 	var compressedBuf bytes.Buffer
+	fmt.Println("Starting compression of log data")
 	gzipWriter := gzip.NewWriter(&compressedBuf)
 	gzipWriter.Write(rawDecodedText)
 	gzipWriter.Close()
+	fmt.Println("Compression completed")
 
 	backOff := time.Second * 2
 	sendRetries := 4
@@ -125,7 +139,7 @@ func doRequest(rawDecodedText []byte, url string) {
 			time.Sleep(backOff)
 			backOff *= 2
 		}
-
+		fmt.Println("Creating HTTP request")
 		req, err := http.NewRequest("POST", url, &compressedBuf)
 		if err != nil {
 			fmt.Printf("Connection was failed: %s", err)
@@ -142,9 +156,12 @@ func doRequest(rawDecodedText []byte, url string) {
 
 		defer resp.Body.Close()
 
+		fmt.Printf("Received response with status code: %d\n", resp.StatusCode)
 		if shouldRetry(resp.StatusCode) {
 			toBackOff = true
+			fmt.Println("Retry needed based on status code")
 		} else {
+			fmt.Println("Log data sent successfully")
 			break
 		}
 
