@@ -32,60 +32,35 @@
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
             "args": [
-                "-c",
-                "gcloud pubsub topics list | \n while read -r line \ndo \n stringarray=($line) \n pubsub_topic_remove_name=\"projects/$PROJECT_ID/topics/$_PUBSUB_TOPIC_NAME\" \n if [[ \"${stringarray[1]}\" == \"$pubsub_topic_remove_name\" ]] ;then \n delete_code=\"$(gcloud pubsub topics delete $_PUBSUB_TOPIC_NAME)\" \n fi \n done"
+                "projects",
+                "add-iam-policy-binding",
+                "$PROJECT_ID",
+                "--member=serviceAccount:$PROJECT_NUMBER@appspot.gserviceaccount.com",
+                "--role=roles/artifactregistry.reader"
             ]
         },
         {
             "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
             "args": [
-                "-c",
-                "gcloud logging sinks delete $_SINK_NAME || true",
-                "y"
-            ]
-        },
-        {
-            "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
-            "args": [
-                "-c",
-                "gcloud pubsub subscriptions list | \n while read -r line \ndo \n stringarray=($line) \n pubsub_subscription_remove_name=\"projects/$PROJECT_ID/subscriptions/$_PUBSUB_SUBSCRIPTION_NAME\" \n if [[ \"${stringarray[1]}\" == \"$pubsub_subscription_remove_name\" ]] ;then \n delete_code=\"$(gcloud pubsub subscriptions delete $_PUBSUB_SUBSCRIPTION_NAME)\" \n fi \n done"
-            ]
-        },
-        {
-            "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
-            "args": ["-c", "gcloud pubsub topics create $_PUBSUB_TOPIC_NAME"]
-        },
-        {
-            "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
-            "args": [
-                "-c",
-                "gcloud logging sinks create $_SINK_NAME pubsub.googleapis.com/projects/$PROJECT_ID/topics/$_PUBSUB_TOPIC_NAME --log-filter='NOT (resource.type=\"cloud_function\" resource.labels.function_name=~\"logzio_.\")$_FILTER_LOG'"
-            ]
-        },
-        {
-            "name": "gcr.io/cloud-builders/gcloud",
-            "entrypoint": "bash",
-            "args": [
-                "-c",
-                "data=$(gcloud logging sinks describe $_SINK_NAME)\ngcloud logging sinks describe $_SINK_NAME |\nwhile read -r line\ndo\n  stringarray=($line)\n\n  if [ ${stringarray[0]} == 'writerIdentity:' ]\n  then\n    indentity=\"${stringarray[1]}\"\n    gcloud pubsub topics add-iam-policy-binding $_PUBSUB_TOPIC_NAME --member \"${indentity}\" --role roles/pubsub.publisher\n  fi\ndone\n"
+                "projects",
+                "add-iam-policy-binding",
+                "$PROJECT_ID",
+                "--member=serviceAccount:$PROJECT_NUMBER@appspot.gserviceaccount.com",
+                "--role=roles/artifactregistry.repositories.get"
             ]
         }
     ],
     "substitutions": {
-        "_PUBSUB_TOPIC_NAME": "pubsub-topic-logs-to-logzio",
-        "_PUBSUB_SUBSCRIPTION_NAME": "pubsub-subscription-logs-to-logzio",
-        "_SINK_NAME": "sink-logs-to-logzio",
-        "_REGION": "us-central1",
+        "_PUBSUB_TOPIC_NAME": "logzio_handler-pubsub-topic-logs-to-logzio",
+        "_PUBSUB_SUBSCRIPTION_NAME": "logzio_handler-pubsub-subscription-logs-to-logzio",
+        "_SINK_NAME": "logzio_handler-sink-logs-to-logzio",
+        "_REGION": "us-east1",
         "_LOGZIO_LISTENER": "listener.logz.io",
         "_LOGZIO_TOKEN": "token",
         "_TYPE_NAME": "gcp-pubsub",
-        "_FILTER_LOG": " AND resource.type=cloud_function"
+        "_FILTER_LOG": " AND resource.type=cloud_function",
+        "_FUNCTION_NAME": "logzio_handler"
     },
     "options": {
         "dynamic_substitutions": true,

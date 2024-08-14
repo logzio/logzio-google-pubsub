@@ -3,7 +3,8 @@
 # Declare default type
 log_type="gcp-pubsub"
 function_name="logzio_handler"
-
+project_id=""
+telemetry_list="all_services"
 # Prints usage
 # Output:
 #   Help usage
@@ -142,9 +143,9 @@ function populate_filter_for_service_name(){
     do
 	    current=$((current + 1))
 	    if [ $current -eq $last_element ]; then
-	        filter+=" resource.type=${name})"
+	        filter+=" resource.type=${name}"
         else
-	        filter+=" (resource.type=${name} OR"
+	        filter+=" resource.type=${name} OR"
 	    fi
     # or do whatever with individual element of the array
     done
@@ -179,7 +180,7 @@ function populate_data_to_json (){
         echo "${contents}" > config.json
     fi
 
-    contents="$(jq --arg topic_prefix "${function_name}" '.substitutions._PUBSUB_TOPIC_NAME = $topic_prefix+"-pubsub-topic-logs-to-logzio"' config.json)"
+    contents="$(jq --arg topic_name "${function_name}" '.substitutions._PUBSUB_TOPIC_NAME = $topic_name+"-pubsub-topic-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
     contents="$(jq --arg subscription_prefix "${function_name}" '.substitutions._PUBSUB_SUBSCRIPTION_NAME = $subscription_prefix+"-pubsub-subscription-logs-to-logzio"' config.json)"
     echo "${contents}" > config.json
@@ -212,6 +213,97 @@ function is_gcloud_install(){
         exit 1	
     fi
 }
+function remove_log_sink(){
+    sink_name="$function_name-sink-logs-to-logzio"
+    cmd_remove_log_sink="gcloud logging sinks delete $sink_name || true"
+    gcloud logging sinks delete $sink_name --quiet || true
+    if [[ $? -ne 0 ]]; then
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to remove Log sink."
+        exit 1
+    fi
+	
+    echo "$cmd_remove_log_sink"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Log sink removal is finished."
+}
+
+function remove_pubsub_topic(){
+    topic_name="$function_name-pubsub-topic-logs-to-logzio"
+    cmd_remove_topic="gcloud pubsub topics list | \n while read -r line \ndo \n stringarray=($line) \n pubsub_topic_remove_name=\"projects/$project_id/topics/$topic_name\" \n if [[ \"${stringarray[1]}\" == \"$pubsub_topic_remove_name\" ]] ;then \n delete_code=\"$(gcloud pubsub topics delete $topic_name)\" \n fi \n done"
+    gcloud pubsub topics list | while read -r line
+    do
+    stringarray=($line)
+    pubsub_topic_remove_name="projects/$project_id/topics/$topic_name"
+    if [[ "${stringarray[1]}" == "$pubsub_topic_remove_name" ]]; then
+        delete_code=$(gcloud pubsub topics delete $topic_name || true)
+    fi
+    done
+
+    if [[ $? -ne 0 ]]; then
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to remove PubSub topic."
+        exit 1
+    fi
+	
+    echo "$cmd_remove_log_sink"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] PubSub topic removal is finished."
+}
+
+function cleanup_resources(){
+    remove_log_sink
+    remove_pubsub_topic
+}
+
+function _add_log_sink_iam_policy(){
+    topic_name="$function_name-pubsub-topic-logs-to-logzio"
+    sink_name="$function_name-sink-logs-to-logzio"
+    cmd_add_iam_log_sink="gcloud logging sinks describe $sink_name |\nwhile read -r line\ndo\n  stringarray=($line)\n\n  if [ ${stringarray[0]} == 'writerIdentity:' ]\n  then\n    identity=\"${stringarray[1]}\"\n    gcloud pubsub topics add-iam-policy-binding $topic_name --member \"${identity}\" --role roles/pubsub.publisher \n  fi\ndone\n"
+    gcloud logging sinks describe $sink_name | while read -r line
+    do
+    stringarray=($line)
+    if [ ${stringarray[0]} == 'writerIdentity:' ]
+    then
+    identity=${stringarray[1]}   
+    gcloud pubsub topics add-iam-policy-binding $topic_name --member ${identity} --role roles/pubsub.publisher
+    fi
+    done
+    
+    if [[ $? -ne 0 ]]; then
+        echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to add IAM policy to log sink."
+        exit 1
+    fi
+	
+    echo "$cmd_add_iam_log_sink"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] IAM policy addition to log sink is finished."
+
+}
+
+function create_log_sink(){
+    topic_name="$function_name-pubsub-topic-logs-to-logzio"
+    sink_name="$function_name-sink-logs-to-logzio"
+    cmd_create_log_sink="gcloud logging sinks create $sink_name pubsub.googleapis.com/projects/$project_id/topics/$topic_name --log-filter=\"NOT (resource.type=\"cloud_function\" resource.labels.function_name=~\"logzio_.\")$telemetry_list\""
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Attempt to creatre log sink: $cmd_create_log_sink."
+    gcloud logging sinks create $sink_name pubsub.googleapis.com/projects/$project_id/topics/$topic_name --log-filter="NOT (resource.type=\"cloud_function\" resource.labels.function_name=~\"logzio_.\")$telemetry_list"
+    if [[ $? -ne 0 ]]; then
+    echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create Log sink."
+    exit 1
+    fi
+	
+    echo "$cmd_create_log_sink"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] Log sink creation is finished."
+    _add_log_sink_iam_policy
+}
+
+function create_pubsub_topic(){
+    topic_name="$function_name-pubsub-topic-logs-to-logzio"
+    cmd_create_pubsub_topic="gcloud pubsub topics create $topic_name"
+    gcloud pubsub topics create $topic_name    
+    if [[ $? -ne 0 ]]; then
+    echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create PubSub topic."
+    exit 1
+    fi
+	
+    echo "$cmd_create_pubsub_topic"
+    echo -e "[INFO] [$(date +"%Y-%m-%d %H:%M:%S")] PubSub topic creation is finished."
+}
 
 function run_cloud_build(){
     
@@ -225,6 +317,8 @@ function run_cloud_build(){
     cmd_enable_cloudresourcemanager="$(gcloud services enable cloudresourcemanager.googleapis.com)"
     cmd_enable_cloudbuild="$(gcloud services enable cloudbuild.googleapis.com)"
     cmd_enable_cloudfunction="$(gcloud services enable cloudfunctions.googleapis.com)"
+    cmd_enable_run_api="$(gcloud services enable run.googleapis.com)"
+    cmd_enable_eventarc="$(gcloud services enable eventarc.googleapis.com)"
 
     cmd_add_policy="$(gcloud projects add-iam-policy-binding $project_id --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/resourcemanager.projectIamAdmin)"
     cmd_enable_policy_function="$(gcloud iam service-accounts add-iam-policy-binding $project_id@appspot.gserviceaccount.com --member serviceAccount:$project_number@cloudbuild.gserviceaccount.com --role roles/iam.serviceAccountUser)"
@@ -238,14 +332,14 @@ function run_cloud_build(){
     # Create Function with using local files
     if [[ "$function_name" =~ ^logzio_* ]];
     then
-        function_name_sufix="${function_name}"
+        function_name_suffix="${function_name}"
     else
-        function_name_sufix="logzio_${function_name}"
+        function_name_suffix="logzio_${function_name}"
     fi
 
-    topic_prefix="$function_name-pubsub-topic-logs-to-logzio"
+    topic_name="$function_name-pubsub-topic-logs-to-logzio"
 
-    gcloud functions deploy $function_name_sufix --region=$gcp_region --trigger-topic=$topic_prefix --entry-point=LogzioHandler --runtime=go121  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
+    gcloud functions deploy $function_name --gen2 --region=$gcp_region  --retry --trigger-topic=$topic_name --entry-point=LogzioHandler --runtime=go121  --source=./cloud_function_go  --no-allow-unauthenticated --set-env-vars=token=$token --set-env-vars=type=$log_type --set-env-vars=listener=$listener_url
     if [[ $? -ne 0 ]]; then
         echo -e "[ERROR] [$(date +"%Y-%m-%d %H:%M:%S")] Failed to create Cloud Function."
         exit 1
@@ -304,7 +398,10 @@ function _choose_and_set_project_id(){
 
 is_gcloud_install
 gcloud_init_confs
+cleanup_resources
 get_arguments "$@"
 populate_filter_for_service_name
 populate_data_to_json
+create_pubsub_topic
+create_log_sink
 run_cloud_build
