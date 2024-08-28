@@ -64,7 +64,7 @@ Give your logs some time to get from your system to ours, and then open [Kibana]
 
 # Uninstall
 
-###  gcp_region - Region where user want to upload Cloud Funtion.
+###  gcp_region - Region where user want to remove Logz.io integration resources.
 ###  function_name - Name of the Cloud Function. Default is 'logzioHandler'
 
 To uninstall the resources, run the following command:
