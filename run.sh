@@ -405,7 +405,7 @@ function choose_and_set_project_id(){
     echo "[$((count + 1))]:  All Projects"
 
     # Prompt the user to select multiple projects
-    read -p "Please fill in the numbers of the projects where you would like the integration to be deployed, separated by spaces (or type 'all' to select all projects): " -a mainmenuinput
+    read -p "Please fill in the project index numbers of the projects where you would like the integration to be deployed, separated by spaces (or type 'all' to select all projects): " -a mainmenuinput
 
     # Validate and store selected projects
 if [[ "${mainmenuinput[0]}" == "all" || "${mainmenuinput[0]}" -eq $((count + 1)) ]]; then

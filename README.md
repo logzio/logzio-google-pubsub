@@ -17,29 +17,38 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 
 ## Prerequisites
 
-Make sure you are connected to the relevant GCP project
+### Pull integration
+There are 2 options are available to pull the integration:
 
-<details>1. Log in to your GCP account:
+1. Clone repository
+  - 
+  ```shell
+  Make sure you are connected to the relevant GCP project
+  -
+<details> Log in to your GCP account:
+  
+  ```shell
+  gcloud auth login
+  ``` 
+  - Donwload and unzip the latest release of `logzio-google-pubsub`.
+  - Navigate to the relevant project.
+2. Run Google Cloud Shell configuration
 
-```shell
-gcloud auth login
-```
-
-2. Navigate to the relevant project.
+  - [Click this link](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/logzio/logzio-google-pubsub
+  ) to clone the solution's repo and use it in your Google Cloud Shell.
+  :::note
+  If a pop-up window appears, check the `Trust repo` box and press `Confirm`.
+  :::
 
 ## Usage
 
-1. Donwload and unzip the latest release of `logzio-google-pubsub`.
-
-2. Navigate to the `builder` folder.
-
-3. Allow the `sh` file to execute code.
+1. Allow the `sh` file to execute code.
 
 ```shell
 chmod +x run.sh
 ```
 
-4. Run the code:
+2. Run the code:
 
 ```
 ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --telemetry_list=<telemetry_list>
