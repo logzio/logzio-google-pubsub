@@ -27,14 +27,6 @@ gcloud auth login
 
 2. Navigate to the relevant project.
 
-3. Set the `project id` for the project that you want to send logs from:
-
-```shell
-gcloud config set project <PROJECT_ID>
-```
-
-Replace `<PROJECT_ID>` with the relevant project Id.</details>
-
 ## Usage
 
 1. Donwload and unzip the latest release of `logzio-google-pubsub`.
@@ -53,7 +45,7 @@ chmod +x run.sh
 ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --telemetry_list=<telemetry_list>
 ```
 
-<b>When you run this script, you should choose the project ID where you need to run the integration.</b>
+<b>When you run this script, you should choose the project ID/s where you need to run the integration, you can choose `all` to deploy resources on all projects</b>
 
 Replace the variables as per the table below:
 
@@ -70,12 +62,25 @@ Replace the variables as per the table below:
 
 Give your logs some time to get from your system to ours, and then open [Kibana](https://app.logz.io/#/dashboard/kibana).
 
+# Uninstall
+
+###  gcp_region - Region where user want to upload Cloud Funtion.
+###  function_name - Name of the Cloud Function. Default is 'logzioHandler'
+
+To uninstall the resources, run the following command:
+
+```shell
+chmod +x uninstall.sh && ./uninstall.sh --gcp_region=<region> --function_name=<function_name>
+```
+
 ## License
 
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Changelog
-
+- **1.2.8**:
+  - Allow fresh deployment to multiple projects, includes 'all' option.
+  - Add `uninstall.sh` option to remove resources.
 - **1.2.7**:
   - **Breaking change**
     - Upgrade Google Cloud function to v2
