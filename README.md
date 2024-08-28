@@ -17,43 +17,44 @@ Google Cloud Platform (GCP) Logging collects logs from your cloud services. You 
 
 ## Prerequisites
 
-Make sure you are connected to the relevant GCP project
+### Pull integration
+There are 2 options are available to pull the integration:
 
-<details>1. Log in to your GCP account:
+1. Clone repository
+  - 
+  ```shell
+  Make sure you are connected to the relevant GCP project
+  -
+<details> Log in to your GCP account:
+  
+  ```shell
+  gcloud auth login
+  ``` 
+  - Donwload and unzip the latest release of `logzio-google-pubsub`.
+  - Navigate to the relevant project.
+2. Run Google Cloud Shell configuration
 
-```shell
-gcloud auth login
-```
-
-2. Navigate to the relevant project.
-
-3. Set the `project id` for the project that you want to send logs from:
-
-```shell
-gcloud config set project <PROJECT_ID>
-```
-
-Replace `<PROJECT_ID>` with the relevant project Id.</details>
+  - [Click this link](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/logzio/logzio-google-pubsub
+  ) to clone the solution's repo and use it in your Google Cloud Shell.
+  :::note
+  If a pop-up window appears, check the `Trust repo` box and press `Confirm`.
+  :::
 
 ## Usage
 
-1. Donwload and unzip the latest release of `logzio-google-pubsub`.
-
-2. Navigate to the `builder` folder.
-
-3. Allow the `sh` file to execute code.
+1. Allow the `sh` file to execute code.
 
 ```shell
 chmod +x run.sh
 ```
 
-4. Run the code:
+2. Run the code:
 
 ```
 ./run.sh --listener_url=<listener_url> --token=<token> --gcp_region=<region> --log_type=<type> --function_name=<function_name> --telemetry_list=<telemetry_list>
 ```
 
-<b>When you run this script, you should choose the project ID where you need to run the integration.</b>
+<b>When you run this script, you should choose the project ID/s where you need to run the integration, you can choose `all` to deploy resources on all projects</b>
 
 Replace the variables as per the table below:
 
@@ -70,12 +71,25 @@ Replace the variables as per the table below:
 
 Give your logs some time to get from your system to ours, and then open [Kibana](https://app.logz.io/#/dashboard/kibana).
 
+# Uninstall
+
+###  gcp_region - Region where user want to remove Logz.io integration resources.
+###  function_name - Name of the Cloud Function. Default is 'logzioHandler'
+
+To uninstall the resources, run the following command:
+
+```shell
+chmod +x uninstall.sh && ./uninstall.sh --gcp_region=<region> --function_name=<function_name>
+```
+
 ## License
 
 Licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
 ## Changelog
-
+- **1.2.8**:
+  - Allow fresh deployment to multiple projects, includes 'all' option.
+  - Add `uninstall.sh` option to remove resources.
 - **1.2.7**:
   - **Breaking change**
     - Upgrade Google Cloud function to v2
